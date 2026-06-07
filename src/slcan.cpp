@@ -30,7 +30,7 @@ void Slcan::processSlRxMsg(const SlMsg& msg) const {
 }
 
 inline void Slcan::crCmd(const SlMsg& request, SlMsg& response) const {
-    response.content = {SlMsg::CR};
+    response = SlMsg({SlMsg::CR});
 }
 
 inline void Slcan::openCmd(const SlMsg& request, SlMsg& response) const {
@@ -50,29 +50,29 @@ inline void Slcan::canExtCmd(const SlMsg& request, SlMsg& response) const {
 }
 
 inline void Slcan::versionCmd(const SlMsg& request, SlMsg& response) const {
-    response.content = {
+    response = SlMsg({
         static_cast<char>(SlcanCommand::VERSION),
         VERSION[0],
         VERSION[1],
         VERSION[2],
         VERSION[3],
         SlMsg::CR
-    };
+    });
 }
 
 inline void Slcan::serialNumberCmd(const SlMsg& request, SlMsg& response) const {
-    response.content = {
+    response = SlMsg({
         static_cast<char>(SlcanCommand::SERIAL_NUMBER),
         SERIAL_NUMBER[0],
         SERIAL_NUMBER[1],
         SERIAL_NUMBER[2],
         SERIAL_NUMBER[3],
         SlMsg::CR
-    };
+    });
 }
 
 inline void Slcan::unsupportedCmd(const SlMsg& request, SlMsg& response) const {
-    response.content = {SlMsg::BELL};
+    response = SlMsg({SlMsg::BELL});
 }
 
 };
