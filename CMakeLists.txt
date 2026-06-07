@@ -3,11 +3,9 @@ project(slcan-core)
 
 option(BUILD_TESTING "Build tests" OFF)
 
-add_library(slcan-core slcan.cpp)
+add_library(slcan-core src/slcan.cpp)
 
-target_include_directories(slcan-core PUBLIC
-    ${CMAKE_CURRENT_LIST_DIR}
-)
+target_include_directories(slcan-core PUBLIC include)
 
 if(BUILD_TESTING)
     add_subdirectory(tests)
