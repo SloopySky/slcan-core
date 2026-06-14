@@ -1,6 +1,7 @@
 #pragma once
 
 #include "serial.hpp"
+#include "can.hpp"
 
 namespace slcan::core {
 
