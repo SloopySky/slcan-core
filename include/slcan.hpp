@@ -66,7 +66,7 @@ enum class SlcanResponse : char {
 
 class Slcan {
 public:
-    Slcan(SerialInterface& serial) : serial(serial) { }
+    Slcan(SerialInterface& serial, CanInterface& can) : serial(serial), can(can) { }
 
     void processSlRxMsg(const SlMsg&) const;
 
@@ -75,6 +75,7 @@ private:
     State state = State::CLOSED;
 
     SerialInterface& serial;
+    CanInterface& can;
 
     void crCmd(const SlMsg& request, SlMsg& response) const;
     void openCmd(const SlMsg& request, SlMsg& response) const;

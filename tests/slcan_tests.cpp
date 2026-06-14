@@ -7,6 +7,8 @@
 
 using namespace slcan::core;
 
+using ::testing::StrictMock;
+
 /* Test SlMsg */
 struct SlMsgTestData {
     SlMsg msg;
@@ -141,6 +143,26 @@ public:
     MOCK_METHOD(void, transmit, (const SlMsg& msg), (override));
 };
 
+class MockCan : public CanInterface {
+public:
+    MOCK_METHOD(void, transmit, (const CanMsg& msg), (override));
+
+    State state() const { return state_; }
+
+    bool open() override {
+        state_ = State::OPEN;
+        return true;
+    }
+
+    bool close() override {
+        state_ = State::CLOSED;
+        return true;
+    }
+
+private:
+    State state_{State::CLOSED};
+};
+
 struct SlcanRequestsTestData {
     SlMsg request;
     SlMsg response;
@@ -151,7 +173,8 @@ class SlcanRequestsTest : public ::testing::TestWithParam<SlcanRequestsTestData>
 TEST_P(SlcanRequestsTest, SlcanRequests) {
     const auto& test_data = GetParam();
     MockSerial serial;
-    Slcan slcan = Slcan(serial);
+    StrictMock<MockCan> can;
+    Slcan slcan = Slcan(serial, can);
 
     EXPECT_CALL(serial, transmit(test_data.response)).Times(1);
 
