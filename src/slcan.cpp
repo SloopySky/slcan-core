@@ -6,7 +6,7 @@ namespace slcan::core {
 void Slcan::processSlRxMsg(const SlMsg& msg) const {
     SlMsg response;
 
-    if (state == State::OPEN) {
+    if (can.state() == CanInterface::State::OPEN) {
         switch (static_cast<SlcanCommand>(msg.command())) {
             case SlcanCommand::CAN_STD:       canStdCmd(msg, response); break;
             case SlcanCommand::CAN_EXT:       canExtCmd(msg, response); break;
@@ -18,7 +18,7 @@ void Slcan::processSlRxMsg(const SlMsg& msg) const {
         }
     } else {
         switch (static_cast<SlcanCommand>(msg.command())) {
-            case SlcanCommand::CLOSE:         closeCmd(msg, response); break;
+            case SlcanCommand::OPEN:          openCmd(msg, response); break;
             case SlcanCommand::CR:            crCmd(msg, response); break;
             case SlcanCommand::VERSION:       versionCmd(msg, response); break;
             case SlcanCommand::SERIAL_NUMBER: serialNumberCmd(msg, response); break;
@@ -34,11 +34,13 @@ inline void Slcan::crCmd(const SlMsg& request, SlMsg& response) const {
 }
 
 inline void Slcan::openCmd(const SlMsg& request, SlMsg& response) const {
-    unsupportedCmd(request, response);
+    bool result = can.open();
+    response = result ? SlMsg({SlMsg::CR}) : SlMsg({SlMsg::BELL});
 }
 
 inline void Slcan::closeCmd(const SlMsg& request, SlMsg& response) const {
-    unsupportedCmd(request, response);
+    bool result = can.close();
+    response = result ? SlMsg({SlMsg::CR}) : SlMsg({SlMsg::BELL});
 }
 
 inline void Slcan::canStdCmd(const SlMsg& request, SlMsg& response) const {

@@ -71,9 +71,6 @@ public:
     void processSlRxMsg(const SlMsg&) const;
 
 private:
-    enum class State { OPEN, CLOSED };
-    State state = State::CLOSED;
-
     SerialInterface& serial;
     CanInterface& can;
 

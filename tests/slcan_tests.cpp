@@ -8,6 +8,7 @@
 using namespace slcan::core;
 
 using ::testing::StrictMock;
+using ::testing::Mock;
 
 /* Test SlMsg */
 struct SlMsgTestData {
@@ -162,6 +163,43 @@ public:
 private:
     State state_{State::CLOSED};
 };
+
+/* Test Slcan state toggling */
+TEST(SlcanTest, SlcanStateTest) {
+    MockSerial serial;
+    StrictMock<MockCan> can;
+    Slcan slcan = Slcan(serial, can);
+
+    const SlMsg open_request = SlMsg("O\r");
+    const SlMsg close_request = SlMsg("C\r");
+
+    // Initial state CLOSED
+    EXPECT_EQ(can.state(), CanInterface::State::CLOSED);
+
+    // Close request not supported in CLOSED state
+    EXPECT_CALL(serial, transmit(SlMsg({SlMsg::BELL}))).Times(1);
+    slcan.processSlRxMsg(close_request);
+    EXPECT_EQ(can.state(), CanInterface::State::CLOSED);
+    Mock::VerifyAndClearExpectations(&serial);
+
+    // Open request switches the state to OPEN
+    EXPECT_CALL(serial, transmit(SlMsg({SlMsg::CR}))).Times(1);
+    slcan.processSlRxMsg(open_request);
+    EXPECT_EQ(can.state(), CanInterface::State::OPEN);
+    Mock::VerifyAndClearExpectations(&serial);
+
+    // Open request not supported in OPEN state
+    EXPECT_CALL(serial, transmit(SlMsg({SlMsg::BELL}))).Times(1);
+    slcan.processSlRxMsg(open_request);
+    EXPECT_EQ(can.state(), CanInterface::State::OPEN);
+    Mock::VerifyAndClearExpectations(&serial);
+
+    // Close request switches the state to CLOSED
+    EXPECT_CALL(serial, transmit(SlMsg({SlMsg::CR}))).Times(1);
+    slcan.processSlRxMsg(close_request);
+    EXPECT_EQ(can.state(), CanInterface::State::CLOSED);
+    Mock::VerifyAndClearExpectations(&serial);
+}
 
 struct SlcanRequestsTestData {
     SlMsg request;
