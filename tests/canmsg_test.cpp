@@ -8,52 +8,46 @@ using namespace slcan::core;
 
 struct CanMsgTestData {
     CanMsg msg;
-    CanMsg::Type expected_type;
-    std::uint32_t expected_id;
-    std::uint8_t expected_dlc;
-    std::initializer_list<std::uint8_t> expected_data;
+    CanMsg::Type type;
+    std::uint32_t id;
+    std::uint8_t dlc;
+    std::initializer_list<std::uint8_t> data;
 };
 
 class CanMsgTest : public ::testing::TestWithParam<CanMsgTestData> { };
 
 TEST_P(CanMsgTest, CanMsgClass) {
     const auto& test_data = GetParam();
-    const CanMsg& msg = test_data.msg;
 
-    EXPECT_EQ(msg.type(), test_data.expected_type);
-    EXPECT_EQ(msg.id(), test_data.expected_id);
-    EXPECT_EQ(msg.dlc(), test_data.expected_dlc);
-    EXPECT_EQ(std::memcmp(msg.data(), test_data.expected_data.begin(), test_data.expected_dlc), 0);
+    EXPECT_EQ(test_data.msg.type, test_data.type);
+    EXPECT_EQ(test_data.msg.id, test_data.id);
+    EXPECT_EQ(test_data.msg.dlc, test_data.dlc);
+    EXPECT_EQ(std::memcmp(test_data.msg.data, test_data.data.begin(), test_data.dlc), 0);
 }
 
 INSTANTIATE_TEST_SUITE_P(
     CanMsgTestCases,
     CanMsgTest,
     ::testing::Values(
-        CanMsgTestData{ // Default parameters
-            CanMsg(),
-            CanMsg::Type::STD, CanMsg::MAX_STD_ID, 0, {}
+        CanMsgTestData{ // No data
+            CanMsg(CanMsg::Type::STD, 0x123),
+            CanMsg::Type::STD, 0x123, 0, {}
         },
-        CanMsgTestData{ // Correct STD
-            CanMsg(CanMsg::Type::STD, 0x123, { 0x01, 0x02, 0x03, 0x04 }),
-            CanMsg::Type::STD, 0x123, 4, { 0x01, 0x02, 0x03, 0x04 }
-        },
-        CanMsgTestData{ // Correct EXT
-            CanMsg(CanMsg::Type::EXT, 0x12457, { 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xBA, 0xBB }),
-            CanMsg::Type::EXT, 0x12457, 8, { 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xBA, 0xBB }
-        },
-        CanMsgTestData{ // STD incorrect ID
-            CanMsg(CanMsg::Type::STD, 0xFFFF, { 0x01, 0x02, 0x03, 0x04 }),
-            CanMsg::Type::STD, CanMsg::MAX_STD_ID, 4, { 0x01, 0x02, 0x03, 0x04 }
-        },
-        CanMsgTestData{ // EXT incorrect ID
-            CanMsg(CanMsg::Type::EXT, 0xFFFFFFFF, { 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xBA, 0xBB }),
-            CanMsg::Type::EXT, CanMsg::MAX_EXT_ID, 8, { 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xBA, 0xBB }
+        CanMsgTestData{ // 8 data byes
+            CanMsg(CanMsg::Type::STD, 0x123, {0xAB, 0xCD, 0xEF, 0x12, 0x34, 0x56, 0x78, 0x90}),
+            CanMsg::Type::STD, 0x123, 8, {0xAB, 0xCD, 0xEF, 0x12, 0x34, 0x56, 0x78, 0x90}
         },
         CanMsgTestData{ // Too many data bytes
             CanMsg(CanMsg::Type::STD, 0x123, { 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF }),
             CanMsg::Type::STD, 0x123, 8, { 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xBA, 0xBB }
+        },
+        CanMsgTestData{ // STD incorrect ID
+            CanMsg(CanMsg::Type::STD, 0xFFFF, { 0x01, 0x02, 0x03, 0x04 }),
+            CanMsg::Type::STD, CanMsg::MAX_ID<CanMsg::Type::STD>, 4, { 0x01, 0x02, 0x03, 0x04 }
+        },
+        CanMsgTestData{ // EXT incorrect ID
+            CanMsg(CanMsg::Type::EXT, 0xFFFFFFFF, { 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xBA, 0xBB }),
+            CanMsg::Type::EXT, CanMsg::MAX_ID<CanMsg::Type::EXT>, 8, { 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xBA, 0xBB }
         }
     )
 );
-

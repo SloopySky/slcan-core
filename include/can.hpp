@@ -5,7 +5,7 @@
 
 namespace slcan::core {
 
-class CanMsg;
+struct CanMsg;
 
 class CanInterface {
 public:
@@ -18,38 +18,34 @@ public:
     ~CanInterface() = default;
 };
 
-class CanMsg {
-public:
-    static constexpr std::uint32_t MAX_STD_ID = 0x7FF;
-    static constexpr std::uint32_t MAX_EXT_ID = 0x1FFFFFFF;
+struct CanMsg {
+    enum class Type { STD, EXT };
+
+    template <Type T>
+    static constexpr std::size_t MAX_ID = T == Type::STD ? 0x7FF : 0x1FFFFFFF;
+
     static constexpr std::uint8_t MAX_DLC = 8;
 
-    enum class Type {STD, EXT};
+    Type type;
+    std::uint32_t id;
+    std::uint8_t dlc;
+    std::uint8_t data[MAX_DLC];
 
-    CanMsg(Type type = Type::STD, std::uint32_t id = 0xFFFFFFFF, std::initializer_list<std::uint8_t> data = {})
-        : type_(type), dlc_(data.size() > MAX_DLC ? MAX_DLC : data.size()) {
-        if (type == Type::STD) {
-            id_ = id > MAX_STD_ID ? MAX_STD_ID : id;
-        } else {
-            id_ = id > MAX_EXT_ID ? MAX_EXT_ID : id;
-        }
+    CanMsg() = default;
 
-        std::copy(data.begin(), data.begin() + dlc_, data_.begin());
+    CanMsg(Type type, uint32_t id, std::initializer_list<std::uint8_t> data = {})
+        : type(type), dlc(data.size() > MAX_DLC ? MAX_DLC : data.size()) {
+            uint32_t max_id = type == Type::STD ? MAX_ID<Type::STD> : MAX_ID<Type::EXT>;
+            this->id = id > max_id ? max_id : id;
+            std::memcpy(this->data, data.begin(), dlc);
     }
 
-    constexpr Type type() const { return type_; }
-
-    constexpr std::uint32_t id() const { return id_; }
-
-    constexpr std::uint8_t dlc() const { return dlc_; }
-
-    constexpr const std::uint8_t * data() const { return data_.data(); }
-
-private:
-    Type type_;
-    std::uint32_t id_;
-    std::uint8_t dlc_;
-    std::array<std::uint8_t, MAX_DLC> data_;
+    friend bool operator==(const CanMsg& l, const CanMsg& r) {
+        return l.type == r.type
+            && l.id == r.id
+            && l.dlc == r.dlc
+            && std::memcmp(l.data, r.data, l.dlc) == 0;
+    }
 };
 
 };

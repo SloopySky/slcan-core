@@ -5,8 +5,8 @@
 
 namespace slcan::core {
 
-constexpr std::array<std::uint8_t, 4> VERSION = { '0', '0', '0', '1' };
-constexpr std::array<std::uint8_t, 4> SERIAL_NUMBER = { '-', '-', '-', '-' };
+constexpr std::array<char, 4> VERSION = { '0', '0', '0', '1' };
+constexpr std::array<char, 4> SERIAL_NUMBER = { '-', '-', '-', '-' };
 
 constexpr std::size_t COMMAND_LEN = 1;
 
