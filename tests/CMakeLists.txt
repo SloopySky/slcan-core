@@ -15,7 +15,7 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-add_executable(slcan-tests slmsg_test.cpp canmsg_test.cpp slcan_test.cpp)
+add_executable(slcan-tests slmsg_test.cpp canmsg_test.cpp slcan_test.cpp msg_converter_test.cpp)
 target_link_libraries(slcan-tests slcan-core GTest::gtest_main GTest::gmock)
 
 include(GoogleTest)
