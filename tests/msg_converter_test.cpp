@@ -23,21 +23,21 @@ TEST_P(HexTest, HexCoversion) {
 
     {
         std::vector<std::uint8_t> arr(bytes);
-        hex_str_to_arr(test_data.str.data(), arr.data(), digits);
+        hexStrToArr(test_data.str.data(), arr.data(), digits);
         EXPECT_TRUE(std::equal(arr.begin(), arr.end(), test_data.arr.begin()));
     }
     {
         std::vector<char> str(digits);
-        arr_to_hex_str(test_data.arr.data(), str.data(), bytes);
+        arrToHexStr(test_data.arr.data(), str.data(), bytes);
         EXPECT_TRUE(std::equal(str.begin(), str.end(), test_data.str.begin()));
     }
     {
-        std::uint32_t value = hex_str_to_int(test_data.str.data(), digits);
+        std::uint32_t value = hexStrToInt(test_data.str.data(), digits);
         EXPECT_EQ(value, test_data.value);
     }
     {
         std::vector<char> str(digits);
-        int_to_hex_str(test_data.value, str.data(), digits);
+        intToHexStr(test_data.value, str.data(), digits);
         EXPECT_TRUE(std::equal(str.begin(), str.end(), test_data.str.begin()));
     }
 }
@@ -66,8 +66,8 @@ TEST_P(InvalidSlMsgConvertTest, InvalidSlMsgConvert) {
     CanMsg can_msg;
 
     bool result = test_data.type == CanMsg::Type::STD ? \
-        try_convert<CanMsg::Type::STD>(test_data.msg, can_msg) : \
-        try_convert<CanMsg::Type::EXT>(test_data.msg, can_msg);
+        tryConvert<CanMsg::Type::STD>(test_data.msg, can_msg) : \
+        tryConvert<CanMsg::Type::EXT>(test_data.msg, can_msg);
 
     EXPECT_FALSE(result);
 }
@@ -97,8 +97,8 @@ TEST_P(MsgConvertTest, MsgConvert) {
     {
         CanMsg can_msg;
         bool result = test_data.can_msg.type == CanMsg::Type::STD ? \
-            try_convert<CanMsg::Type::STD>(test_data.sl_msg, can_msg) : \
-            try_convert<CanMsg::Type::EXT>(test_data.sl_msg, can_msg);
+            tryConvert<CanMsg::Type::STD>(test_data.sl_msg, can_msg) : \
+            tryConvert<CanMsg::Type::EXT>(test_data.sl_msg, can_msg);
         EXPECT_TRUE(result);
         EXPECT_EQ(can_msg, test_data.can_msg);
     }

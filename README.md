@@ -4,7 +4,7 @@ This is slcan-core component repository which implements [slcan protocol](https:
 
 ## TODO
 
-[ ] Refactor function names to **camelCase** for consistency
+[x] Refactor function names to **camelCase** for consistency
 [ ] Refactor tests to use setup
 
 ## Consume with CMake

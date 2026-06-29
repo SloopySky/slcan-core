@@ -45,7 +45,7 @@ inline void Slcan::closeCmd(const SlMsg& request, SlMsg& response) const {
 
 inline void Slcan::canStdCmd(const SlMsg& request, SlMsg& response) const {
     CanMsg msg;
-    bool result = msg_converter::try_convert<CanMsg::Type::STD>(request, msg);
+    bool result = msg_converter::tryConvert<CanMsg::Type::STD>(request, msg);
     if (result) {
         can.transmit(msg);
         response = SlMsg({static_cast<char>(SlcanResponse::CAN_STD), SlMsg::CR});
@@ -56,7 +56,7 @@ inline void Slcan::canStdCmd(const SlMsg& request, SlMsg& response) const {
 
 inline void Slcan::canExtCmd(const SlMsg& request, SlMsg& response) const {
     CanMsg msg;
-    bool result = msg_converter::try_convert<CanMsg::Type::EXT>(request, msg);
+    bool result = msg_converter::tryConvert<CanMsg::Type::EXT>(request, msg);
     if (result) {
         can.transmit(msg);
         response = SlMsg({static_cast<char>(SlcanResponse::CAN_EXT), SlMsg::CR});
