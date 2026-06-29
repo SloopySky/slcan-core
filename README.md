@@ -2,6 +2,11 @@
 
 This is slcan-core component repository which implements [slcan protocol](https://www.canusb.com/files/canusb_manual.pdf)
 
+## TODO
+
+[ ] Refactor function names to **camelCase** for consistency
+[ ] Refactor tests to use setup
+
 ## Consume with CMake
 
 To cosume slcan-core component in a CMake project, it is recommended to use FetchContent.
@@ -38,4 +43,3 @@ cmake --build build
 ```
 ctest --test-dir build/tests
 ```
-
