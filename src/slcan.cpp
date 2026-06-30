@@ -29,6 +29,18 @@ void Slcan::processSlRxMsg(const SlMsg& msg) const {
     serial.transmit(response);
 }
 
+void Slcan::processCanRxMsg(const CanMsg& msg) const {
+    SlMsg sl_msg;
+
+    if (msg.type == CanMsg::Type::STD) {
+        msg_converter::convert<CanMsg::Type::STD>(msg, sl_msg);
+    } else {
+        msg_converter::convert<CanMsg::Type::EXT>(msg, sl_msg);
+    }
+
+    serial.transmit(sl_msg);
+}
+
 inline void Slcan::crCmd(const SlMsg& request, SlMsg& response) const {
     response = SlMsg({SlMsg::CR});
 }

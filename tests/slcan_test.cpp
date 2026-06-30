@@ -280,3 +280,52 @@ INSTANTIATE_TEST_SUITE_P(
         return std::string(info.param.name);
     }
 );
+
+struct SlcanCanRxTestData {
+    const char * name;
+    CanMsg can_msg;
+    SlMsg sl_msg;
+};
+
+class SlcanCanRxTest : public ::testing::TestWithParam<SlcanCanRxTestData> {
+protected:
+    SlcanCanRxTest() : slcan(serial, can) { }
+
+    MockSerial serial;
+    StrictMock<MockCan> can;
+
+    Slcan slcan;
+};
+
+TEST_P(SlcanCanRxTest, SlCanRxTest) {
+    const auto& test_data = GetParam();
+
+    EXPECT_CALL(serial, transmit(test_data.sl_msg)).Times(1);
+
+    slcan.processCanRxMsg(test_data.can_msg);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    SlcanCanRxTestCases,
+    SlcanCanRxTest,
+    ::testing::Values(
+        SlcanCanRxTestData{
+            "STD",
+            CanMsg(CanMsg::Type::STD, 0x1FF, {0xAB, 0xCD}),
+            SlMsg("t1FF2ABCD\r"),
+        },
+        SlcanCanRxTestData{
+            "Empty_STD",
+            CanMsg(CanMsg::Type::STD, 0x1FF),
+            SlMsg("t1FF0\r"),
+        },
+        SlcanCanRxTestData{
+            "EXT",
+            CanMsg(CanMsg::Type::EXT, 0x1FFFFFFF, {0xAB, 0xCD, 0xEF, 0x12, 0x34, 0x56, 0x78, 0x90}),
+            SlMsg("T1FFFFFFF8ABCDEF1234567890\r"),
+        }
+    ),
+    [](const testing::TestParamInfo<SlcanCanRxTestData>& info) {
+        return std::string(info.param.name);
+    }
+);

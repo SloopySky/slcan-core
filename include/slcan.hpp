@@ -70,6 +70,8 @@ public:
 
     void processSlRxMsg(const SlMsg&) const;
 
+    void processCanRxMsg(const CanMsg&) const;
+
 private:
     SerialInterface& serial;
     CanInterface& can;
