@@ -10,7 +10,6 @@ using namespace slcan::core;
 using ::testing::StrictMock;
 using ::testing::Mock;
 
-/* Test Slcan requests */
 class MockSerial : public SerialInterface {
 public:
     MOCK_METHOD(void, transmit, (const SlMsg& msg), (override));
@@ -37,6 +36,7 @@ private:
 };
 
 struct SlcanRequestsTestData {
+    const char * name;
     SlMsg request;
     SlMsg response;
     std::optional<CanMsg> can_msg;
@@ -87,39 +87,50 @@ INSTANTIATE_TEST_SUITE_P(
     SlcanRequestsTestCases,
     SlcanClosedRequestsTest,
     ::testing::Values(
-        SlcanRequestsTestData{ // Empty request
+        SlcanRequestsTestData{
+            "Empty_request",
             SlMsg(),
             SlMsg({SlMsg::BELL}),
         },
-        SlcanRequestsTestData{ // Unterminated request
+        SlcanRequestsTestData{
+            "Unterminated_request",
             SlMsg("V"),
             SlMsg({SlMsg::BELL}),
         },
-        SlcanRequestsTestData{ // Unsupported request
+        SlcanRequestsTestData{
+            "Unsupported_request",
             SlMsg("X\r"),
             SlMsg({SlMsg::BELL}),
         },
-        SlcanRequestsTestData{ // CR command request
+        SlcanRequestsTestData{
+            "CR_command_request",
             SlMsg({SlMsg::CR}),
             SlMsg({SlMsg::CR}),
         },
-        SlcanRequestsTestData{ // V command request
+        SlcanRequestsTestData{
+            "V_command_request",
             SlMsg("V\r"),
             SlMsg({'V', VERSION[0], VERSION[1], VERSION[2], VERSION[3], SlMsg::CR}),
         },
-        SlcanRequestsTestData{ // N command request
+        SlcanRequestsTestData{
+            "N_command_request",
             SlMsg("N\r"),
             SlMsg({'N', SERIAL_NUMBER[0], SERIAL_NUMBER[1], SERIAL_NUMBER[2], SERIAL_NUMBER[3], SlMsg::CR}),
         },
-        SlcanRequestsTestData{ // Std command request not supported
+        SlcanRequestsTestData{
+            "Std_command_request_not_supported",
             SlMsg("t1232ABCD\r"),
             SlMsg({SlMsg::BELL}),
         },
-        SlcanRequestsTestData{ // Ext command request not supported
+        SlcanRequestsTestData{
+            "Ext_command_request_not_supported",
             SlMsg("T1234ABCD2ABCD\r"),
             SlMsg({SlMsg::BELL}),
         }
-    )
+    ),
+    [](const testing::TestParamInfo<SlcanRequestsTestData>& info) {
+        return std::string(info.param.name);
+    }
 );
 
 class SlcanOpenRequestsTest : public SlcanClosedRequestsTest {
@@ -162,31 +173,40 @@ INSTANTIATE_TEST_SUITE_P(
     SlcanRequestsTestCases,
     SlcanOpenRequestsTest,
     ::testing::Values(
-        SlcanRequestsTestData{ // Empty request
+        SlcanRequestsTestData{
+            "Empty_request",
             SlMsg(),
             SlMsg({SlMsg::BELL}),
         },
-        SlcanRequestsTestData{ // Unterminated request
+        SlcanRequestsTestData{
+            "Unterminated_request",
             SlMsg("V"),
             SlMsg({SlMsg::BELL}),
         },
-        SlcanRequestsTestData{ // Unsupported request
+        SlcanRequestsTestData{
+            "Unsupported_request",
             SlMsg("X\r"),
             SlMsg({SlMsg::BELL}),
         },
-        SlcanRequestsTestData{ // CR command request
+        SlcanRequestsTestData{
+            "CR_command_request",
             SlMsg({SlMsg::CR}),
             SlMsg({SlMsg::CR}),
         },
-        SlcanRequestsTestData{ // V command request
+        SlcanRequestsTestData{
+            "V_command_request",
             SlMsg("V\r"),
             SlMsg({'V', VERSION[0], VERSION[1], VERSION[2], VERSION[3], SlMsg::CR}),
         },
-        SlcanRequestsTestData{ // N command request
+        SlcanRequestsTestData{
+            "N_command_request",
             SlMsg("N\r"),
             SlMsg({'N', SERIAL_NUMBER[0], SERIAL_NUMBER[1], SERIAL_NUMBER[2], SERIAL_NUMBER[3], SlMsg::CR}),
         }
-    )
+    ),
+    [](const testing::TestParamInfo<SlcanRequestsTestData>& info) {
+        return std::string(info.param.name);
+    }
 );
 
 class SlcanCanRequestsTest : public SlcanOpenRequestsTest { };
@@ -207,45 +227,56 @@ INSTANTIATE_TEST_SUITE_P(
     SlcanRequestsTestCases,
     SlcanCanRequestsTest,
     ::testing::Values(
-        SlcanRequestsTestData{ // Unterminated request
+        SlcanRequestsTestData{
+            "Unterminated_request",
             SlMsg("t1232ABCD"),
             SlMsg({SlMsg::BELL}),
             std::nullopt,
         },
-        SlcanRequestsTestData{ // STD ID out of range
+        SlcanRequestsTestData{
+            "STD_ID_out_of_range",
             SlMsg("tFFF2ABCD\r"),
             SlMsg({SlMsg::BELL}),
             std::nullopt,
         },
-        SlcanRequestsTestData{ // EXT ID out of range
+        SlcanRequestsTestData{
+            "EXT_ID_out_of_range",
             SlMsg("TFFFFFFFF2ABCD\r"),
             SlMsg({SlMsg::BELL}),
             std::nullopt,
         },
-        SlcanRequestsTestData{ // DLC out of range
+        SlcanRequestsTestData{
+            "DLC_out_of_range",
             SlMsg("t1FF9ABCDEF1234567890AB\r"),
             SlMsg({SlMsg::BELL}),
             std::nullopt,
         },
-        SlcanRequestsTestData{ // DLC and data size not matching
+        SlcanRequestsTestData{
+            "DLC_and_data_size_not_matching",
             SlMsg("t1FF4ABCDEF123456\r"),
             SlMsg({SlMsg::BELL}),
             std::nullopt,
         },
-        SlcanRequestsTestData{ // Valid STD
+        SlcanRequestsTestData{
+            "Valid_STD",
             SlMsg("t1FF2ABCD\r"),
             SlMsg({static_cast<char>(SlcanResponse::CAN_STD), SlMsg::CR}),
             CanMsg(CanMsg::Type::STD, 0x1FF, {0xAB, 0xCD}),
         },
-        SlcanRequestsTestData{ // Valid empty STD
+        SlcanRequestsTestData{
+            "Valid_empty_STD",
             SlMsg("t1FF0\r"),
             SlMsg({static_cast<char>(SlcanResponse::CAN_STD), SlMsg::CR}),
             CanMsg(CanMsg::Type::STD, 0x1FF),
         },
-        SlcanRequestsTestData{ // Valid EXT
+        SlcanRequestsTestData{
+            "Valid_EXT",
             SlMsg("T1FFFFFFF8ABCDEF1234567890\r"),
             SlMsg({static_cast<char>(SlcanResponse::CAN_EXT), SlMsg::CR}),
             CanMsg(CanMsg::Type::EXT, 0x1FFFFFFF, {0xAB, 0xCD, 0xEF, 0x12, 0x34, 0x56, 0x78, 0x90}),
         }
-    )
+    ),
+    [](const testing::TestParamInfo<SlcanRequestsTestData>& info) {
+        return std::string(info.param.name);
+    }
 );

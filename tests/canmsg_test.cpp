@@ -7,6 +7,7 @@
 using namespace slcan::core;
 
 struct CanMsgTestData {
+    const char * name;
     CanMsg msg;
     CanMsg::Type type;
     std::uint32_t id;
@@ -29,25 +30,33 @@ INSTANTIATE_TEST_SUITE_P(
     CanMsgTestCases,
     CanMsgTest,
     ::testing::Values(
-        CanMsgTestData{ // No data
+        CanMsgTestData{
+            "No_data",
             CanMsg(CanMsg::Type::STD, 0x123),
             CanMsg::Type::STD, 0x123, 0, {}
         },
-        CanMsgTestData{ // 8 data byes
+        CanMsgTestData{ 
+            "8_data_bytes",
             CanMsg(CanMsg::Type::STD, 0x123, {0xAB, 0xCD, 0xEF, 0x12, 0x34, 0x56, 0x78, 0x90}),
             CanMsg::Type::STD, 0x123, 8, {0xAB, 0xCD, 0xEF, 0x12, 0x34, 0x56, 0x78, 0x90}
         },
-        CanMsgTestData{ // Too many data bytes
+        CanMsgTestData{
+            "Too_many_data_bytes",
             CanMsg(CanMsg::Type::STD, 0x123, { 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF }),
             CanMsg::Type::STD, 0x123, 8, { 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xBA, 0xBB }
         },
-        CanMsgTestData{ // STD incorrect ID
+        CanMsgTestData{
+            "STD_incorrect_ID",
             CanMsg(CanMsg::Type::STD, 0xFFFF, { 0x01, 0x02, 0x03, 0x04 }),
             CanMsg::Type::STD, CanMsg::MAX_ID<CanMsg::Type::STD>, 4, { 0x01, 0x02, 0x03, 0x04 }
         },
-        CanMsgTestData{ // EXT incorrect ID
+        CanMsgTestData{
+            "EXT_incorrect_ID",
             CanMsg(CanMsg::Type::EXT, 0xFFFFFFFF, { 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xBA, 0xBB }),
             CanMsg::Type::EXT, CanMsg::MAX_ID<CanMsg::Type::EXT>, 8, { 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xBA, 0xBB }
         }
-    )
+    ),
+    [](const testing::TestParamInfo<CanMsgTestData>& info) {
+        return std::string(info.param.name);
+    }
 );

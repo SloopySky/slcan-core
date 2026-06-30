@@ -7,6 +7,7 @@
 using namespace slcan::core;
 
 struct SlMsgTestData {
+    const char * name;
     SlMsg msg;
     std::size_t length;
     char command;
@@ -26,26 +27,29 @@ INSTANTIATE_TEST_SUITE_P(
     SlMsgTestCases,
     SlMsgTest,
     ::testing::Values(
-        SlMsgTestData{ // Empty SlMsg
-            SlMsg(), 0, SlMsg::BELL
+        SlMsgTestData{
+            "Empty_SlMsg", SlMsg(), 0, SlMsg::BELL
         },
-        SlMsgTestData{ // Unterminated SlMsg, string_view ctor
-            SlMsg("V001"), 0, SlMsg::BELL
+        SlMsgTestData{
+            "Unterminated_SlMsg_string_view_ctor", SlMsg("V001"), 0, SlMsg::BELL
         },
-        SlMsgTestData{ // Terminated SlMsg, string_view ctor
-            SlMsg("V001\r"), 5, 'V'
+        SlMsgTestData{
+            "Terminated_SlMsg_string_view_ctor", SlMsg("V001\r"), 5, 'V'
         },
-        SlMsgTestData{ // Unterminated SlMsg, initializer_list ctor
-            SlMsg({'V', '0', '0', '1'}), 0, SlMsg::BELL
+        SlMsgTestData{
+            "Unterminated_SlMsg_initializer_list_ctor", SlMsg({'V', '0', '0', '1'}), 0, SlMsg::BELL
         },
-        SlMsgTestData{ // Terminated SlMsg, initializer_list ctor
-            SlMsg({'V', '0', '0', '1', '\r'}), 5, 'V'
+        SlMsgTestData{
+            "Terminated_SlMsg_initializer_list_ctor", SlMsg({'V', '0', '0', '1', '\r'}), 5, 'V'
         },
-        SlMsgTestData{ // Initializer too long, string_view ctor
-            SlMsg("V00000000000000000000000000000000000\r"), 0, SlMsg::BELL
+        SlMsgTestData{
+            "Initializer_too_long_string_view_ctor", SlMsg("V00000000000000000000000000000000000\r"), 0, SlMsg::BELL
         },
-        SlMsgTestData{ // Initializer too long, initializer_list ctor
-            SlMsg({'V', '0', '0', '1', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '\r'}), 0, SlMsg::BELL
+        SlMsgTestData{
+            "Initializer_too_long_initializer_list_ctor", SlMsg({'V', '0', '0', '1', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '\r'}), 0, SlMsg::BELL
         }
-    )
+    ),
+    [](const testing::TestParamInfo<SlMsgTestData>& info) {
+        return std::string(info.param.name);
+    }
 );
