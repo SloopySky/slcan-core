@@ -5,7 +5,9 @@ This is slcan-core component repository which implements [slcan protocol](https:
 ## TODO
 
 [x] Refactor function names to **camelCase** for consistency
-[ ] Refactor tests to use setup
+[x] Refactor tests to use setup
+[ ] Assume Slcan receives only terminated messages
+[ ] Assume SlMsg contain only valid hex characters (except command and terminators)
 
 ## Consume with CMake
 

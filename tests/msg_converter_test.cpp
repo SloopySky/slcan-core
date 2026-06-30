@@ -15,31 +15,45 @@ struct HexTestData {
 
 class HexTest : public ::testing::TestWithParam<HexTestData> { };
 
-TEST_P(HexTest, HexCoversion) {
+TEST_P(HexTest, HexStrToArrTest) {
     const auto& test_data = GetParam();
 
     const std::size_t digits = test_data.str.size();
     const std::size_t bytes = test_data.arr.size();
 
-    {
-        std::vector<std::uint8_t> arr(bytes);
-        hexStrToArr(test_data.str.data(), arr.data(), digits);
-        EXPECT_TRUE(std::equal(arr.begin(), arr.end(), test_data.arr.begin()));
-    }
-    {
-        std::vector<char> str(digits);
-        arrToHexStr(test_data.arr.data(), str.data(), bytes);
-        EXPECT_TRUE(std::equal(str.begin(), str.end(), test_data.str.begin()));
-    }
-    {
-        std::uint32_t value = hexStrToInt(test_data.str.data(), digits);
-        EXPECT_EQ(value, test_data.value);
-    }
-    {
-        std::vector<char> str(digits);
-        intToHexStr(test_data.value, str.data(), digits);
-        EXPECT_TRUE(std::equal(str.begin(), str.end(), test_data.str.begin()));
-    }
+    std::vector<std::uint8_t> arr(bytes);
+    hexStrToArr(test_data.str.data(), arr.data(), digits);
+    EXPECT_TRUE(std::equal(arr.begin(), arr.end(), test_data.arr.begin()));
+}
+
+TEST_P(HexTest, ArrToHexStrTest) {
+    const auto& test_data = GetParam();
+
+    const std::size_t digits = test_data.str.size();
+    const std::size_t bytes = test_data.arr.size();
+
+    std::vector<char> str(digits);
+    arrToHexStr(test_data.arr.data(), str.data(), bytes);
+    EXPECT_TRUE(std::equal(str.begin(), str.end(), test_data.str.begin()));
+}
+
+TEST_P(HexTest, HexStrToIntTest) {
+    const auto& test_data = GetParam();
+
+    const std::size_t digits = test_data.str.size();
+
+    std::uint32_t value = hexStrToInt(test_data.str.data(), digits);
+    EXPECT_EQ(value, test_data.value);
+}
+
+TEST_P(HexTest, IntToHexStrTest) {
+    const auto& test_data = GetParam();
+
+    const std::size_t digits = test_data.str.size();
+
+    std::vector<char> str(digits);
+    intToHexStr(test_data.value, str.data(), digits);
+    EXPECT_TRUE(std::equal(str.begin(), str.end(), test_data.str.begin()));
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -77,7 +91,7 @@ INSTANTIATE_TEST_SUITE_P(
     InvalidSlMsgConvertTest,
     ::testing::Values(
         InvalidSlMsgConvertTestData{ CanMsg::Type::STD, SlMsg("tFFF2ABCD\r") }, // STD ID out of range
-        InvalidSlMsgConvertTestData{ CanMsg::Type::STD, SlMsg("TFFFFFFFF2ABCD\r") }, // EXT ID out of range
+        InvalidSlMsgConvertTestData{ CanMsg::Type::EXT, SlMsg("TFFFFFFFF2ABCD\r") }, // EXT ID out of range
         InvalidSlMsgConvertTestData{ CanMsg::Type::STD, SlMsg("t1FF9ABCDEF1234567890AB\r") }, // DLC out of range
         InvalidSlMsgConvertTestData{ CanMsg::Type::STD, SlMsg("t1FF4ABCDEF123456\r") } // DLC and data size not matching
     )
@@ -91,26 +105,31 @@ struct MsgConvertTestData {
 
 class MsgConvertTest : public ::testing::TestWithParam<MsgConvertTestData> { };
 
-TEST_P(MsgConvertTest, MsgConvert) {
+TEST_P(MsgConvertTest, SlToCanMsgConvertTest) {
     const auto& test_data = GetParam();
 
-    {
-        CanMsg can_msg;
-        bool result = test_data.can_msg.type == CanMsg::Type::STD ? \
-            tryConvert<CanMsg::Type::STD>(test_data.sl_msg, can_msg) : \
-            tryConvert<CanMsg::Type::EXT>(test_data.sl_msg, can_msg);
-        EXPECT_TRUE(result);
-        EXPECT_EQ(can_msg, test_data.can_msg);
+    CanMsg can_msg;
+
+    bool result = test_data.can_msg.type == CanMsg::Type::STD ? \
+        tryConvert<CanMsg::Type::STD>(test_data.sl_msg, can_msg) : \
+        tryConvert<CanMsg::Type::EXT>(test_data.sl_msg, can_msg);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(can_msg, test_data.can_msg);
+}
+
+TEST_P(MsgConvertTest, CanToSlMsgConvertTest) {
+    const auto& test_data = GetParam();
+
+    SlMsg sl_msg;
+
+    if (test_data.can_msg.type == CanMsg::Type::STD) {
+        convert<CanMsg::Type::STD>(test_data.can_msg, sl_msg);
+    } else {
+        convert<CanMsg::Type::EXT>(test_data.can_msg, sl_msg);
     }
-    {
-        SlMsg sl_msg;
-        if (test_data.can_msg.type == CanMsg::Type::STD) {
-            convert<CanMsg::Type::STD>(test_data.can_msg, sl_msg);
-        } else {
-            convert<CanMsg::Type::EXT>(test_data.can_msg, sl_msg);
-        }
-        EXPECT_EQ(sl_msg, test_data.sl_msg);
-    }
+
+    EXPECT_EQ(sl_msg, test_data.sl_msg);
 }
 
 INSTANTIATE_TEST_SUITE_P(

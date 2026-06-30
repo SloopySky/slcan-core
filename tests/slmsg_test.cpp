@@ -8,8 +8,8 @@ using namespace slcan::core;
 
 struct SlMsgTestData {
     SlMsg msg;
-    std::size_t expectedLength;
-    char expectedCommand;
+    std::size_t length;
+    char command;
 };
 
 class SlMsgTest : public ::testing::TestWithParam<SlMsgTestData> { };
@@ -18,8 +18,8 @@ TEST_P(SlMsgTest, SlMsgLengthAndCommand) {
     const auto& test_data = GetParam();
     const SlMsg& msg = test_data.msg;
 
-    EXPECT_EQ(msg.length, test_data.expectedLength);
-    EXPECT_EQ(msg.command(), test_data.expectedCommand);
+    EXPECT_EQ(msg.length, test_data.length);
+    EXPECT_EQ(msg.command(), test_data.command);
 }
 
 INSTANTIATE_TEST_SUITE_P(

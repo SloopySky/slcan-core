@@ -36,57 +36,48 @@ private:
     State state_{State::CLOSED};
 };
 
-/* Test Slcan state toggling */
-TEST(SlcanTest, SlcanStateTest) {
-    MockSerial serial;
-    StrictMock<MockCan> can;
-    Slcan slcan = Slcan(serial, can);
-
-    const SlMsg open_request = SlMsg("O\r");
-    const SlMsg close_request = SlMsg("C\r");
-
-    // Initial state CLOSED
-    EXPECT_EQ(can.state(), CanInterface::State::CLOSED);
-
-    // Close request not supported in CLOSED state
-    EXPECT_CALL(serial, transmit(SlMsg({SlMsg::BELL}))).Times(1);
-    slcan.processSlRxMsg(close_request);
-    EXPECT_EQ(can.state(), CanInterface::State::CLOSED);
-    Mock::VerifyAndClearExpectations(&serial);
-
-    // Open request switches the state to OPEN
-    EXPECT_CALL(serial, transmit(SlMsg({SlMsg::CR}))).Times(1);
-    slcan.processSlRxMsg(open_request);
-    EXPECT_EQ(can.state(), CanInterface::State::OPEN);
-    Mock::VerifyAndClearExpectations(&serial);
-
-    // Open request not supported in OPEN state
-    EXPECT_CALL(serial, transmit(SlMsg({SlMsg::BELL}))).Times(1);
-    slcan.processSlRxMsg(open_request);
-    EXPECT_EQ(can.state(), CanInterface::State::OPEN);
-    Mock::VerifyAndClearExpectations(&serial);
-
-    // Close request switches the state to CLOSED
-    EXPECT_CALL(serial, transmit(SlMsg({SlMsg::CR}))).Times(1);
-    slcan.processSlRxMsg(close_request);
-    EXPECT_EQ(can.state(), CanInterface::State::CLOSED);
-    Mock::VerifyAndClearExpectations(&serial);
-}
-
 struct SlcanRequestsTestData {
     SlMsg request;
     SlMsg response;
     std::optional<CanMsg> can_msg;
 };
 
-class SlcanClosedRequestsTest : public ::testing::TestWithParam<SlcanRequestsTestData> { };
+class SlcanClosedRequestsTest : public ::testing::TestWithParam<SlcanRequestsTestData> {
+protected:
+    SlcanClosedRequestsTest() : slcan(serial, can) { }
+
+    MockSerial serial;
+    StrictMock<MockCan> can;
+
+    Slcan slcan;
+
+    const SlMsg open_request = SlMsg("O\r");
+    const SlMsg close_request = SlMsg("C\r");
+};
+
+TEST_F(SlcanClosedRequestsTest, InitialStateClosed) {
+    EXPECT_EQ(can.state(), CanInterface::State::CLOSED);
+}
+
+TEST_F(SlcanClosedRequestsTest, CloseRequestNotSupportedInClosed) {
+    EXPECT_CALL(serial, transmit(SlMsg({SlMsg::BELL})));
+
+    slcan.processSlRxMsg(close_request);
+
+    EXPECT_EQ(can.state(), CanInterface::State::CLOSED);
+}
+
+TEST_F(SlcanClosedRequestsTest, OpenRequestTransition) {
+    EXPECT_CALL(serial, transmit(SlMsg({SlMsg::CR})));
+
+    slcan.processSlRxMsg(open_request);
+
+    EXPECT_EQ(can.state(), CanInterface::State::OPEN);
+}
 
 TEST_P(SlcanClosedRequestsTest, SlcanClosedRequests) {
     const auto& test_data = GetParam();
-    MockSerial serial;
-    StrictMock<MockCan> can;
-    Slcan slcan = Slcan(serial, can);
-
+ 
     EXPECT_CALL(serial, transmit(test_data.response)).Times(1);
 
     slcan.processSlRxMsg(test_data.request);
@@ -97,7 +88,7 @@ INSTANTIATE_TEST_SUITE_P(
     SlcanClosedRequestsTest,
     ::testing::Values(
         SlcanRequestsTestData{ // Empty request
-            SlMsg({0}),
+            SlMsg(),
             SlMsg({SlMsg::BELL}),
         },
         SlcanRequestsTestData{ // Unterminated request
@@ -105,7 +96,7 @@ INSTANTIATE_TEST_SUITE_P(
             SlMsg({SlMsg::BELL}),
         },
         SlcanRequestsTestData{ // Unsupported request
-            SlMsg("X"),
+            SlMsg("X\r"),
             SlMsg({SlMsg::BELL}),
         },
         SlcanRequestsTestData{ // CR command request
@@ -119,10 +110,6 @@ INSTANTIATE_TEST_SUITE_P(
         SlcanRequestsTestData{ // N command request
             SlMsg("N\r"),
             SlMsg({'N', SERIAL_NUMBER[0], SERIAL_NUMBER[1], SERIAL_NUMBER[2], SERIAL_NUMBER[3], SlMsg::CR}),
-        },
-        SlcanRequestsTestData{ // Close command request not supported
-            SlMsg("C\r"),
-            SlMsg({SlMsg::BELL}),
         },
         SlcanRequestsTestData{ // Std command request not supported
             SlMsg("t1232ABCD\r"),
@@ -135,22 +122,39 @@ INSTANTIATE_TEST_SUITE_P(
     )
 );
 
-class SlcanOpenRequestsTest : public ::testing::TestWithParam<SlcanRequestsTestData> { };
+class SlcanOpenRequestsTest : public SlcanClosedRequestsTest {
+protected:
+    void SetUp() override {
+        EXPECT_CALL(serial, transmit(SlMsg({SlMsg::CR})));
+        slcan.processSlRxMsg(open_request);
+    }
+};
+
+TEST_F(SlcanOpenRequestsTest, InitialStateOpen) {
+    EXPECT_EQ(can.state(), CanInterface::State::OPEN);
+}
+
+TEST_F(SlcanOpenRequestsTest, OpenRequestNotSupportedInOpen) {
+    EXPECT_CALL(serial, transmit(SlMsg({SlMsg::BELL})));
+
+    slcan.processSlRxMsg(open_request);
+
+    EXPECT_EQ(can.state(), CanInterface::State::OPEN);
+}
+
+TEST_F(SlcanOpenRequestsTest, CloseRequestTransition) {
+    EXPECT_CALL(serial, transmit(SlMsg({SlMsg::CR})));
+
+    slcan.processSlRxMsg(close_request);
+
+    EXPECT_EQ(can.state(), CanInterface::State::CLOSED);
+}
 
 TEST_P(SlcanOpenRequestsTest, SlcanOpenRequests) {
     const auto& test_data = GetParam();
-    MockSerial serial;
-    StrictMock<MockCan> can;
-    Slcan slcan = Slcan(serial, can);
-
-    // Switch the state to OPEN
-    const SlMsg open_request = SlMsg("O\r");
-    EXPECT_CALL(serial, transmit(SlMsg({SlMsg::CR}))).Times(1);
-    slcan.processSlRxMsg(open_request);
-    EXPECT_EQ(can.state(), CanInterface::State::OPEN);
-    Mock::VerifyAndClearExpectations(&serial);
-
+ 
     EXPECT_CALL(serial, transmit(test_data.response)).Times(1);
+
     slcan.processSlRxMsg(test_data.request);
 }
 
@@ -159,7 +163,7 @@ INSTANTIATE_TEST_SUITE_P(
     SlcanOpenRequestsTest,
     ::testing::Values(
         SlcanRequestsTestData{ // Empty request
-            SlMsg({0}),
+            SlMsg(),
             SlMsg({SlMsg::BELL}),
         },
         SlcanRequestsTestData{ // Unterminated request
@@ -167,7 +171,7 @@ INSTANTIATE_TEST_SUITE_P(
             SlMsg({SlMsg::BELL}),
         },
         SlcanRequestsTestData{ // Unsupported request
-            SlMsg("X"),
+            SlMsg("X\r"),
             SlMsg({SlMsg::BELL}),
         },
         SlcanRequestsTestData{ // CR command request
@@ -181,33 +185,21 @@ INSTANTIATE_TEST_SUITE_P(
         SlcanRequestsTestData{ // N command request
             SlMsg("N\r"),
             SlMsg({'N', SERIAL_NUMBER[0], SERIAL_NUMBER[1], SERIAL_NUMBER[2], SERIAL_NUMBER[3], SlMsg::CR}),
-        },
-        SlcanRequestsTestData{ // Open command request not supported
-            SlMsg("O\r"),
-            SlMsg({SlMsg::BELL}),
         }
     )
 );
 
-class SlcanCanRequestsTest : public ::testing::TestWithParam<SlcanRequestsTestData> { };
+class SlcanCanRequestsTest : public SlcanOpenRequestsTest { };
 
 TEST_P(SlcanCanRequestsTest, SlcanCanRequests) {
     const auto& test_data = GetParam();
-    MockSerial serial;
-    StrictMock<MockCan> can;
-    Slcan slcan = Slcan(serial, can);
-
-    // Switch the state to OPEN
-    const SlMsg open_request = SlMsg("O\r");
-    EXPECT_CALL(serial, transmit(SlMsg({SlMsg::CR}))).Times(1);
-    slcan.processSlRxMsg(open_request);
-    EXPECT_EQ(can.state(), CanInterface::State::OPEN);
-    Mock::VerifyAndClearExpectations(&serial);
 
     EXPECT_CALL(serial, transmit(test_data.response)).Times(1);
+
     if (test_data.can_msg) {
         EXPECT_CALL(can, transmit(test_data.can_msg.value())).Times(1);
     }
+
     slcan.processSlRxMsg(test_data.request);
 }
 
