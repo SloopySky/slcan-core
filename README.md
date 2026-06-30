@@ -2,13 +2,6 @@
 
 This is slcan-core component repository which implements [slcan protocol](https://www.canusb.com/files/canusb_manual.pdf)
 
-## TODO
-
-[x] Refactor function names to **camelCase** for consistency
-[x] Refactor tests to use setup
-[ ] Assume Slcan receives only terminated messages
-[ ] Assume SlMsg contain only valid hex characters (except command and terminators)
-
 ## Consume with CMake
 
 To cosume slcan-core component in a CMake project, it is recommended to use FetchContent.

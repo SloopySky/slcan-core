@@ -56,6 +56,10 @@ struct SlMsg {
 
     constexpr char command() const { return length ? content[0] : BELL; }
 
+    constexpr bool terminated() const {
+        return length > 0 && (content[length - 1] == CR || content[length - 1 == BELL]);
+    }
+
     friend bool operator==(const SlMsg& l, const SlMsg& r) {
         return l.length == r.length
             && std::memcmp(l.content, r.content, l.length) == 0;

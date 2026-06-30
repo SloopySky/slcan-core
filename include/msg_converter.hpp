@@ -7,13 +7,11 @@
 namespace slcan::core::msg_converter {
 
 static inline std::uint8_t hexToInt(char c) {
+    assert((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F'));
     if (c >= '0' && c <= '9') {
         return c - '0';
     }
-    if (c >= 'A' && c <= 'F') {
-        return c - 'A' + 0xA;
-    }
-    return c - 'a' + 0xA;
+    return c - 'A' + 0xA;
 }
 
 static inline char intToHex(std::uint8_t h) {

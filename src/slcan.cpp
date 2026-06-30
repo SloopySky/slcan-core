@@ -4,6 +4,8 @@
 namespace slcan::core {
 
 void Slcan::processSlRxMsg(const SlMsg& msg) const {
+    assert(msg.terminated());
+
     SlMsg response;
 
     if (can.state() == CanInterface::State::OPEN) {

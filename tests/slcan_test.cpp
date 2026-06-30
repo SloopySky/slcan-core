@@ -88,16 +88,6 @@ INSTANTIATE_TEST_SUITE_P(
     SlcanClosedRequestsTest,
     ::testing::Values(
         SlcanRequestsTestData{
-            "Empty_request",
-            SlMsg(),
-            SlMsg({SlMsg::BELL}),
-        },
-        SlcanRequestsTestData{
-            "Unterminated_request",
-            SlMsg("V"),
-            SlMsg({SlMsg::BELL}),
-        },
-        SlcanRequestsTestData{
             "Unsupported_request",
             SlMsg("X\r"),
             SlMsg({SlMsg::BELL}),
@@ -174,16 +164,6 @@ INSTANTIATE_TEST_SUITE_P(
     SlcanOpenRequestsTest,
     ::testing::Values(
         SlcanRequestsTestData{
-            "Empty_request",
-            SlMsg(),
-            SlMsg({SlMsg::BELL}),
-        },
-        SlcanRequestsTestData{
-            "Unterminated_request",
-            SlMsg("V"),
-            SlMsg({SlMsg::BELL}),
-        },
-        SlcanRequestsTestData{
             "Unsupported_request",
             SlMsg("X\r"),
             SlMsg({SlMsg::BELL}),
@@ -227,12 +207,6 @@ INSTANTIATE_TEST_SUITE_P(
     SlcanRequestsTestCases,
     SlcanCanRequestsTest,
     ::testing::Values(
-        SlcanRequestsTestData{
-            "Unterminated_request",
-            SlMsg("t1232ABCD"),
-            SlMsg({SlMsg::BELL}),
-            std::nullopt,
-        },
         SlcanRequestsTestData{
             "STD_ID_out_of_range",
             SlMsg("tFFF2ABCD\r"),
