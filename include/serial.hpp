@@ -56,6 +56,10 @@ struct SlMsg {
 
     constexpr char command() const { return length ? content[0] : BELL; }
 
+    constexpr bool empty() const { return length == 0; }
+
+    constexpr bool full() const { return length >= MAX_LENGTH; }
+
     constexpr bool terminated() const {
         return length > 0 && (content[length - 1] == CR || content[length - 1 == BELL]);
     }
